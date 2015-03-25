@@ -16,4 +16,13 @@ public class IssueWrapper {
         this.weight = weight;
 
     }
+
+    @Override
+    public String toString() {
+        return "IW{" +
+                "issue=" + issue +
+                ", id=" + id +
+                ", weight=" + weight +
+                '}';
+    }
 }

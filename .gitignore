@@ -164,3 +164,7 @@ hs_err_pid*
 # Floobits
 .floo
 .flooignore
+
+# Genius Log files
+
+*.csv
