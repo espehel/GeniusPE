@@ -10,10 +10,7 @@ import negotiator.actions.Accept;
 import negotiator.actions.Action;
 import negotiator.actions.Inform;
 import negotiator.actions.Offer;
-import negotiator.issue.ISSUETYPE;
-import negotiator.issue.Issue;
-import negotiator.issue.Objective;
-import negotiator.issue.Value;
+import negotiator.issue.*;
 import negotiator.parties.AbstractNegotiationParty;
 import negotiator.utility.Evaluator;
 import negotiator.utility.EvaluatorDiscrete;
@@ -75,30 +72,25 @@ public class Groupn extends AbstractNegotiationParty {
             IssueWrapper issueWrapper = new IssueWrapper(i+1,tempList.get(i),utilitySpace.getWeight(i+1));
             issues.add(issueWrapper);
         }
-
-        //link all values to our preference weight
-        for (IssueWrapper issue : issues){
-            if(issue.issue.getType() == ISSUETYPE.DISCRETE){
-                EvaluatorDiscrete evaluator = (EvaluatorDiscrete) utilitySpace.getEvaluator(issue.id);
-                System.out.println(evaluator.getWeight() + "==" + issue.weight);
-            }
-        }
-
-
-        for (Map.Entry entry : utilitySpace.getEvaluators()){
-            Objective objective = (Objective) entry.getKey();
-            Evaluator evaluator = (Evaluator) entry.getValue();
-            utilitySpace.getEvaluator(0);
-
-            //System.out.println("obj: " + objective);
-            //System.out.println("eval: " + evaluator);
-        }
-
-
-
-        proposedValues = new HashSet<>();
         try {
+            //link all values to our preference weight
+            valueWeights = new HashMap<>();
+            for (IssueWrapper issue : issues){
+                if(issue.issue.getType() == ISSUETYPE.DISCRETE){
+                    EvaluatorDiscrete evaluator = (EvaluatorDiscrete) utilitySpace.getEvaluator(issue.id);
+                    for (ValueDiscrete value : evaluator.getValues()){
+                        //the weight for a value multiplied with the weight of its issue
+                        double weight = evaluator.getEvaluation(value)*evaluator.getWeight();
+                        valueWeights.put(value,weight);
+                    }
+                }
+            }
+
+            //instantiates myBid with the max utility
             myBid = utilitySpace.getMaxUtilityBid();
+
+            //initiates the set with the values from our maxbid
+            proposedValues = new HashSet<>();
             for (IssueWrapper issue : issues){
                 proposedValues.add(myBid.getValue(issue.id));
             }
