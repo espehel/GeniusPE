@@ -148,6 +148,14 @@ public class Groupn extends AbstractNegotiationParty {
 
         return null;
     }
+    private Bid concedeBidEspen() throws Exception{
+
+        for(IssueWrapper i : issues) {
+            Value value = myBid.getValue(i.id);
+        }
+
+        return null;
+    }
 
 
     /**
