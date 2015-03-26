@@ -15,7 +15,7 @@ public class PartiesModel {
 
 
     public PartiesModel() {
-        estimatedIssueWeight = new HashMap<Issue, Map<Value, Integer>>();
+        estimatedIssueWeight = new HashMap<>();
     }
 
     public void updateIssueWeight(Issue issue, Value value){

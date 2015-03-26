@@ -15,17 +15,24 @@ import negotiator.parties.AbstractNegotiationParty;
 import negotiator.utility.Evaluator;
 import negotiator.utility.EvaluatorDiscrete;
 import negotiator.utility.UtilitySpace;
+import org.jfree.data.statistics.StatisticalCategoryDataset;
 
 /**
  * This is your negotiation party.
  */
 public class Groupn extends AbstractNegotiationParty {
 
+    public static double VALUE_PREFFERENCE_FACTOR = 10;
+    public static double VALUE_GLOBAL_COUNT_FACTOR = 0.1;
+
+
+
     private List<Offer> offerHistory;
     private Offer currentOffer;
     private ArrayList<IssueWrapper> issues;
     private Map<AgentID,OpponentModel> opponentModels;
     private Map<Value,Double> valueWeights;
+    private Random random;
     /**
      * a model for the preferences for all the parties
      */
@@ -38,10 +45,12 @@ public class Groupn extends AbstractNegotiationParty {
      *a set off all values that we have proposed so far
      */
     private Set<Value> proposedValues;
+    private Stack<Value> proposedValuesStack;
     /**
      * History of all received Offers and Accepts in chronological order.
      */
     private LinkedList<AgentOfferWrapper> history;
+
 
     /**
      * Please keep this constructor. This is called by genius.
@@ -58,6 +67,7 @@ public class Groupn extends AbstractNegotiationParty {
         // Make sure that this constructor calls it's parent.
         super(utilitySpace, deadlines, timeline, randomSeed);
 
+        random = new Random(randomSeed);
         history = new LinkedList<>();
 
         System.out.println("==START CONSTRUCTOR===");
@@ -69,7 +79,7 @@ public class Groupn extends AbstractNegotiationParty {
         ArrayList<Issue> tempList = utilitySpace.getDomain().getIssues();
         for (int i = 0; i < tempList.size(); i++) {
             //System.out.println("issue: " + tempList.get(i).getType());
-            IssueWrapper issueWrapper = new IssueWrapper(i+1,tempList.get(i),utilitySpace.getWeight(i+1));
+            IssueWrapper issueWrapper = new IssueWrapper(i+1,tempList.get(i),utilitySpace.getWeight(i+1),((EvaluatorDiscrete) utilitySpace.getEvaluator(i+1)).getValues());
             issues.add(issueWrapper);
         }
         try {
@@ -91,8 +101,10 @@ public class Groupn extends AbstractNegotiationParty {
 
             //initiates the set with the values from our maxbid
             proposedValues = new HashSet<>();
+            proposedValuesStack = new Stack<>();
             for (IssueWrapper issue : issues){
                 proposedValues.add(myBid.getValue(issue.id));
+                proposedValuesStack.push(myBid.getValue(issue.id));
             }
 
             opponentModels = new HashMap<>();
@@ -138,13 +150,14 @@ public class Groupn extends AbstractNegotiationParty {
             }
             //if enough time has elapsed we will concede our bid
             else if(timeline.getTime()>0.5){
-                myBid = concedeBid();
+                myBid = concedeBidEspen();
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        Offer offer = new Offer(myBid);
 
-        return new Offer(myBid);
+        return offer;
     }
 
     private Bid concedeBid() throws Exception{
@@ -152,16 +165,40 @@ public class Groupn extends AbstractNegotiationParty {
         for(IssueWrapper i : issues) {
                 Value value = myBid.getValue(i.id);
         }
-
         return null;
     }
     private Bid concedeBidEspen() throws Exception{
 
-        for(IssueWrapper i : issues) {
-            Value value = myBid.getValue(i.id);
+        List<Value> bestValues = new ArrayList<>();
+        double bestScore = 0;
+        for(Value value : valueWeights.keySet()) {
+            if(proposedValuesStack.contains(value))
+                continue;
+            double valueScore = valueWeights.get(value) * VALUE_PREFFERENCE_FACTOR;
+            valueScore += model.getWeight(findIssueByValue(value).issue,value) * VALUE_GLOBAL_COUNT_FACTOR;
+
+            if(valueScore> bestScore){
+                bestValues.clear();
+                bestValues.add(value);
+                bestScore=valueScore;
+            }else if(valueScore == bestScore){
+                bestValues.add(value);
+            }
         }
 
-        return null;
+        Value lastProposed;
+        //makes sure that we only concede on one issue before 0.9 time has passed
+        if(timeline.getTime()<0.9) {
+            lastProposed = proposedValuesStack.pop();
+            myBid = utilitySpace.getMaxUtilityBid();
+        }
+
+        Value valueToConcede = bestValues.get(random.nextInt(bestValues.size()));
+        proposedValuesStack.push(valueToConcede);
+        Bid newBid = new Bid(myBid);
+        newBid.setValue(findIssueByValue(valueToConcede).id, valueToConcede);
+
+        return newBid;
     }
 
 
@@ -250,6 +287,15 @@ public class Groupn extends AbstractNegotiationParty {
      */
     public Value getBidValue(int issueId) throws Exception {
         return myBid.getValue(issueId+1);
+    }
+    public IssueWrapper findIssueByValue(Value value){
+        for (IssueWrapper issue : issues){
+            for (Value iValue : issue.values){
+                if(value.equals(iValue))
+                    return issue;
+            }
+        }
+        return null;
     }
 
 }
