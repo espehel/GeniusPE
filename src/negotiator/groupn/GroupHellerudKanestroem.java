@@ -138,7 +138,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             // if we are the first party, we make the optimal offer for us.
             if (!validActions.contains(Accept.class)) {
                 Offer n = new Offer(myBid);
-                //currentOffer = n;
+                currentOffer = n;
                 return n; //new Offer(myBid);
             }
             //if the current offer has a utility that is equal or better than our bid
@@ -157,7 +157,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
         // todo In the beginning we ALWAYS override the other bids. So we only
         // learn from the overriding bids of the other agents.
         Offer n = new Offer(myBid);
-        //currentOffer = n;
+        currentOffer = n;
         return n;//new Offer(myBid);
     }
 
@@ -195,7 +195,8 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
 
         //makes sure that we only concede on one issue before 0.9 time has passed
         if(timeline.getTime() < 0.9) {
-            //lastProposed = proposedValuesStack.pop();
+            //lastProposed =
+            proposedValuesStack.pop();
             myBid = utilitySpace.getMaxUtilityBid();
         }
 
