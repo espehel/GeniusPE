@@ -22,7 +22,6 @@ public class IssueWrapper {
 
     }
 
-
     @Override
     public String toString() {
         return "IW{" +

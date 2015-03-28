@@ -16,7 +16,6 @@ public class OpponentModel {
     public AgentID id;
     public Map<Issue, Map<Value, Double>> estimatedIssueWeight;
 
-
     public OpponentModel(AgentID agentID) {
         id = agentID;
         estimatedIssueWeight = new HashMap<Issue, Map<Value, Double>>();

@@ -20,12 +20,10 @@ import org.jfree.data.statistics.StatisticalCategoryDataset;
 /**
  * This is your negotiation party.
  */
-public class Groupn extends AbstractNegotiationParty {
+public class GroupHellerudKanestroem extends AbstractNegotiationParty {
 
     public static double VALUE_PREFFERENCE_FACTOR = 10;
     public static double VALUE_GLOBAL_COUNT_FACTOR = 0.1;
-
-
 
     private List<Offer> offerHistory;
     private Offer currentOffer;
@@ -46,6 +44,7 @@ public class Groupn extends AbstractNegotiationParty {
      */
     private Set<Value> proposedValues;
     private Stack<Value> proposedValuesStack;
+
     /**
      * History of all received Offers and Accepts in chronological order.
      */
@@ -60,10 +59,10 @@ public class Groupn extends AbstractNegotiationParty {
      * @param timeline Value counting from 0 (start) to 1 (end).
      * @param randomSeed If you use any randomization, use this seed for it.
      */
-    public Groupn(UtilitySpace utilitySpace,
-                  Map<DeadlineType, Object> deadlines,
-                  Timeline timeline,
-                  long randomSeed) {
+    public GroupHellerudKanestroem(UtilitySpace utilitySpace,
+                                   Map<DeadlineType, Object> deadlines,
+                                   Timeline timeline,
+                                   long randomSeed) {
         // Make sure that this constructor calls it's parent.
         super(utilitySpace, deadlines, timeline, randomSeed);
 
@@ -75,10 +74,10 @@ public class Groupn extends AbstractNegotiationParty {
         offerHistory = new ArrayList<>();
         issues = new ArrayList<>();
 
-        //saves all the issues for this scenraio with its id and weight
+        //saves all the issues for this scenario with its id and weight
         ArrayList<Issue> tempList = utilitySpace.getDomain().getIssues();
         for (int i = 0; i < tempList.size(); i++) {
-            //System.out.println("issue: " + tempList.get(i).getType());
+            // +1 to fix indexing..
             IssueWrapper issueWrapper = new IssueWrapper(i+1,tempList.get(i),utilitySpace.getWeight(i+1),((EvaluatorDiscrete) utilitySpace.getEvaluator(i+1)).getValues());
             issues.add(issueWrapper);
         }
@@ -102,6 +101,7 @@ public class Groupn extends AbstractNegotiationParty {
             //initiates the set with the values from our maxbid
             proposedValues = new HashSet<>();
             proposedValuesStack = new Stack<>();
+
             for (IssueWrapper issue : issues){
                 proposedValues.add(myBid.getValue(issue.id));
                 proposedValuesStack.push(myBid.getValue(issue.id));
@@ -115,14 +115,8 @@ public class Groupn extends AbstractNegotiationParty {
         }
 
 
-
-        //System.out.println(utilitySpace.getDomain());
         System.out.println("----------UTILITYSPACE--------------");
         System.out.println(utilitySpace);
-
-        //for(Issue i : issues) System.out.println("Constructor: " + i.getDescription());
-        //for(Issue i : issues) System.out.println("Constructor: " + i);
-
         System.out.println("==END CONSTRUCTOR===");
     }
 
@@ -155,9 +149,8 @@ public class Groupn extends AbstractNegotiationParty {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Offer offer = new Offer(myBid);
 
-        return offer;
+        return new Offer(myBid);
     }
 
     private Bid concedeBid() throws Exception{
@@ -167,6 +160,7 @@ public class Groupn extends AbstractNegotiationParty {
         }
         return null;
     }
+
     private Bid concedeBidEspen() throws Exception{
 
         List<Value> bestValues = new ArrayList<>();
@@ -192,19 +186,21 @@ public class Groupn extends AbstractNegotiationParty {
         Value lastProposed;
 
         //makes sure that we only concede on one issue before 0.9 time has passed
-        if(timeline.getTime()<0.9) {
+        if(timeline.getTime() < 0.9) {
             lastProposed = proposedValuesStack.pop();
             myBid = utilitySpace.getMaxUtilityBid();
         }
 
+        // todo Her kommer mitt forslag inn
+        // Vi velger den verdien som påvirker oss minst.
         Value valueToConcede = bestValues.get(random.nextInt(bestValues.size()));
         proposedValuesStack.push(valueToConcede);
+
         Bid newBid = new Bid(myBid);
         newBid.setValue(findIssueByValue(valueToConcede).id, valueToConcede);
 
         return newBid;
     }
-
 
     /**
      * All offers proposed by the other parties will be received as a message.
@@ -219,11 +215,9 @@ public class Groupn extends AbstractNegotiationParty {
 
         // Boring information
         if(action instanceof Inform){
-            //((Inform) action).
             System.out.println("receiveMessage: Informed: " + action);
             return;
         }
-
 
         //Update the history
         history.add(new AgentOfferWrapper(sender, action));
@@ -232,7 +226,7 @@ public class Groupn extends AbstractNegotiationParty {
         if(action instanceof Offer){
             System.out.println("receiveMessage: Offer: " + action);
 
-            currentOffer = (Offer) action;
+            currentOffer = (Offer)action;
 
             offerHistory.add(currentOffer);
 
@@ -240,8 +234,6 @@ public class Groupn extends AbstractNegotiationParty {
             updateModel(currentOffer.getBid());
 
             System.out.println("receiveMessage: Bid utility: " + getUtility(currentOffer.getBid()));
-
-            currentOffer.getAgent();
 
         } else if (action instanceof Accept) {
             updateModel(currentOffer.getBid());
@@ -279,15 +271,8 @@ public class Groupn extends AbstractNegotiationParty {
         }else{
             System.out.println("ERROR: CURRENT BID IS NULL");
         }
-
     }
 
-    /**
-     * returns the value for the 0-indexed issue id from myBid. Converts the id to 1-index
-     */
-    public Value getBidValue(int issueId) throws Exception {
-        return myBid.getValue(issueId+1);
-    }
     public IssueWrapper findIssueByValue(Value value){
         for (IssueWrapper issue : issues){
             for (Value iValue : issue.values){
@@ -295,7 +280,7 @@ public class Groupn extends AbstractNegotiationParty {
                     return issue;
             }
         }
+
         return null;
     }
-
 }
