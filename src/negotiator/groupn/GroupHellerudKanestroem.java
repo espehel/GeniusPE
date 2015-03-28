@@ -138,7 +138,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             // if we are the first party, we make the optimal offer for us.
             if (!validActions.contains(Accept.class)) {
                 Offer n = new Offer(myBid);
-                currentOffer = n;
+                //currentOffer = n;
                 return n; //new Offer(myBid);
             }
             //if the current offer has a utility that is equal or better than our bid
@@ -157,7 +157,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
         // todo In the beginning we ALWAYS override the other bids. So we only
         // learn from the overriding bids of the other agents.
         Offer n = new Offer(myBid);
-        currentOffer = n;
+        //currentOffer = n;
         return n;//new Offer(myBid);
     }
 
@@ -170,7 +170,8 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
     private Bid concedeBid() throws Exception{
 
         List<Value> bestValues = new ArrayList<>();
-        double bestScore = 0;
+        double bestScore = Integer.MIN_VALUE;
+        System.out.println("LOROFL" + valueWeights.size());
 
         for(Value value : valueWeights.keySet()) {
             if(proposedValuesStack.contains(value))
@@ -183,7 +184,8 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             if(valueScore > bestScore){
                 bestValues.clear();
                 bestValues.add(value);
-                bestScore=valueScore;
+                bestScore = valueScore;
+                // todo this double check must have bounds
             } else if(valueScore == bestScore){
                 bestValues.add(value);
             }
@@ -199,6 +201,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
 
         // todo Her kommer mitt forslag inn
         // Vi velger den verdien som påvirker oss minst.
+        System.out.println("LOL " + bestValues.size());
         Value valueToConcede = bestValues.get(random.nextInt(bestValues.size()));
         proposedValuesStack.push(valueToConcede);
 
@@ -244,7 +247,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             System.out.println("receiveMessage: Bid utility: " + getUtility(currentOffer.getBid()));
 
         } else if (action instanceof Accept) {
-            //updateModel(currentOffer.getBid());
+            updateModel(currentOffer.getBid());
         }
 
     }
