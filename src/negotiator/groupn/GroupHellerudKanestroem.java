@@ -2,7 +2,6 @@ package negotiator.groupn;
 
 import java.util.*;
 
-import negotiator.AgentID;
 import negotiator.Bid;
 import negotiator.DeadlineType;
 import negotiator.Timeline;
@@ -12,10 +11,8 @@ import negotiator.actions.Inform;
 import negotiator.actions.Offer;
 import negotiator.issue.*;
 import negotiator.parties.AbstractNegotiationParty;
-import negotiator.utility.Evaluator;
 import negotiator.utility.EvaluatorDiscrete;
 import negotiator.utility.UtilitySpace;
-import org.jfree.data.statistics.StatisticalCategoryDataset;
 
 /**
  * This is your negotiation party.
@@ -25,10 +22,10 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
     public static double VALUE_PREFFERENCE_FACTOR = 10;
     public static double VALUE_GLOBAL_COUNT_FACTOR = 0.1;
 
-    private List<Offer> offerHistory;
+    //private List<Offer> offerHistory;
     private Offer currentOffer;
     private ArrayList<IssueWrapper> issues;
-    private Map<AgentID,OpponentModel> opponentModels;
+
     private Map<Value,Double> valueWeights;
     private Random random;
     /**
@@ -39,16 +36,18 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
      * the current bid that we try to offer
      */
     private Bid myBid;
+
     /**
      *a set off all values that we have proposed so far
      */
     private Set<Value> proposedValues;
+
     private Stack<Value> proposedValuesStack;
 
     /**
      * History of all received Offers and Accepts in chronological order.
      */
-    private LinkedList<AgentOfferWrapper> history;
+    //private LinkedList<AgentOfferWrapper> history;
 
 
     /**
@@ -65,20 +64,23 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
                                    long randomSeed) {
         // Make sure that this constructor calls it's parent.
         super(utilitySpace, deadlines, timeline, randomSeed);
-
-        random = new Random(randomSeed);
-        history = new LinkedList<>();
-
         System.out.println("==START CONSTRUCTOR===");
 
-        offerHistory = new ArrayList<>();
+        random = new Random(randomSeed);
+        //history = new LinkedList<>();
+        //offerHistory = new ArrayList<>();
         issues = new ArrayList<>();
 
         //saves all the issues for this scenario with its id and weight
         ArrayList<Issue> tempList = utilitySpace.getDomain().getIssues();
         for (int i = 0; i < tempList.size(); i++) {
             // +1 to fix indexing..
-            IssueWrapper issueWrapper = new IssueWrapper(i+1,tempList.get(i),utilitySpace.getWeight(i+1),((EvaluatorDiscrete) utilitySpace.getEvaluator(i+1)).getValues());
+            IssueWrapper issueWrapper = new IssueWrapper(
+                    i+1,
+                    tempList.get(i),
+                    utilitySpace.getWeight(i+1),
+                    ((EvaluatorDiscrete) utilitySpace.getEvaluator(i+1)).getValues());
+
             issues.add(issueWrapper);
         }
         try {
@@ -86,7 +88,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             valueWeights = new HashMap<>();
             for (IssueWrapper issue : issues){
                 if(issue.issue.getType() == ISSUETYPE.DISCRETE){
-                    EvaluatorDiscrete evaluator = (EvaluatorDiscrete) utilitySpace.getEvaluator(issue.id);
+                    EvaluatorDiscrete evaluator = (EvaluatorDiscrete)utilitySpace.getEvaluator(issue.id);
                     for (ValueDiscrete value : evaluator.getValues()){
                         //the weight for a value multiplied with the weight of its issue
                         double weight = evaluator.getEvaluation(value)*evaluator.getWeight();
@@ -107,7 +109,6 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
                 proposedValuesStack.push(myBid.getValue(issue.id));
             }
 
-            opponentModels = new HashMap<>();
             model = new PartiesModel();
 
         } catch (Exception e) {
@@ -136,32 +137,37 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
 
             // if we are the first party, we make the optimal offer for us.
             if (!validActions.contains(Accept.class)) {
-                return new Offer(myBid);
+                Offer n = new Offer(myBid);
+                currentOffer = n;
+                return n; //new Offer(myBid);
             }
             //if the current offer has a utility that is equal or better than our bid
-            else if(utilitySpace.getUtility(currentOffer.getBid())>=utilitySpace.getUtility(myBid)){
+            else if(utilitySpace.getUtility(currentOffer.getBid()) >= utilitySpace.getUtility(myBid)){
                 return new Accept();
             }
             //if enough time has elapsed we will concede our bid
             else if(timeline.getTime() > 0.5){
-                myBid = concedeBidEspen();
+                myBid = concedeBid();
             }
+            // todo If time is ~1, should we Accept by default? Total rejection of negotiation is not good.
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return new Offer(myBid);
+        // todo In the beginning we ALWAYS override the other bids. So we only
+        // learn from the overriding bids of the other agents.
+        Offer n = new Offer(myBid);
+        currentOffer = n;
+        return n;//new Offer(myBid);
     }
 
+    /**
+     * Calculates a new bid from the current globally used bid.
+     *
+     * @return new Bid
+     * @throws Exception
+     */
     private Bid concedeBid() throws Exception{
-
-        for(IssueWrapper i : issues) {
-                Value value = myBid.getValue(i.id);
-        }
-        return null;
-    }
-
-    private Bid concedeBidEspen() throws Exception{
 
         List<Value> bestValues = new ArrayList<>();
         double bestScore = 0;
@@ -183,11 +189,11 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             }
         }
 
-        Value lastProposed;
+        //Value lastProposed;
 
         //makes sure that we only concede on one issue before 0.9 time has passed
         if(timeline.getTime() < 0.9) {
-            lastProposed = proposedValuesStack.pop();
+            //lastProposed = proposedValuesStack.pop();
             myBid = utilitySpace.getMaxUtilityBid();
         }
 
@@ -211,6 +217,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
      */
     @Override
     public void receiveMessage(Object sender, Action action) {
+        // numberOfParties is set in super
         super.receiveMessage(sender, action);
 
         // Boring information
@@ -220,50 +227,37 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
         }
 
         //Update the history
-        history.add(new AgentOfferWrapper(sender, action));
+        //history.add(new AgentOfferWrapper(sender, action));
 
         // Here you can listen to other parties' messagese
         if(action instanceof Offer){
             System.out.println("receiveMessage: Offer: " + action);
 
+            // Updates the currentOffer so it can be used when we
+            // need to choose an action
             currentOffer = (Offer)action;
 
-            offerHistory.add(currentOffer);
+            //offerHistory.add(currentOffer);
 
-            updateOpponentModel(currentOffer.getAgent(), currentOffer.getBid());
             updateModel(currentOffer.getBid());
 
             System.out.println("receiveMessage: Bid utility: " + getUtility(currentOffer.getBid()));
 
         } else if (action instanceof Accept) {
-            updateModel(currentOffer.getBid());
+            //updateModel(currentOffer.getBid());
         }
+
     }
 
+    /**
+     * Updates the internal model
+     * @param bid
+     */
     private void updateModel(Bid bid) {
         if(bid != null) {
             for (Issue issue : bid.getIssues()) {
                 try {
                     model.updateIssueWeight(issue, bid.getValue(issue.getNumber()));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }else{
-            System.out.println("ERROR: CURRENT BID IS NULL");
-        }
-    }
-
-    public void updateOpponentModel(final AgentID agentID, Bid currentBid){
-        if(!opponentModels.keySet().contains(agentID))
-            opponentModels.put(agentID, new OpponentModel(agentID));
-
-        OpponentModel opponent = opponentModels.get(agentID);
-
-        if(currentBid != null) {
-            for (Issue issue : currentBid.getIssues()) {
-                try {
-                    opponent.updateIssueWeight(issue, currentBid.getValue(issue.getNumber()));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

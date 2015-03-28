@@ -10,6 +10,7 @@ import java.util.LinkedList;
 /**
  * Created by Perÿyvind on 25/03/2015.
  */
+@Deprecated
 public class AgentOfferWrapper {
     Object sender;
     Action action;
