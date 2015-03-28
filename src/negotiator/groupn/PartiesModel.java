@@ -1,6 +1,5 @@
 package negotiator.groupn;
 
-import negotiator.AgentID;
 import negotiator.issue.Issue;
 import negotiator.issue.Value;
 
@@ -34,6 +33,12 @@ public class PartiesModel {
         }
     }
     public double getWeight(Issue issue, Value value){
+
+        if (!estimatedIssueWeight.get(issue).containsKey(value)){
+            // We do not have any data on that issue
+            return 0;
+        }
+
         return estimatedIssueWeight.get(issue).get(value);
     }
 }

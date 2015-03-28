@@ -91,7 +91,7 @@ public class Groupn extends AbstractNegotiationParty {
                     for (ValueDiscrete value : evaluator.getValues()){
                         //the weight for a value multiplied with the weight of its issue
                         double weight = evaluator.getEvaluation(value)*evaluator.getWeight();
-                        valueWeights.put(value,weight);
+                        valueWeights.put(value, weight);
                     }
                 }
             }
@@ -149,7 +149,7 @@ public class Groupn extends AbstractNegotiationParty {
                 return new Accept();
             }
             //if enough time has elapsed we will concede our bid
-            else if(timeline.getTime()>0.5){
+            else if(timeline.getTime() > 0.5){
                 myBid = concedeBidEspen();
             }
         } catch (Exception e) {
@@ -171,22 +171,26 @@ public class Groupn extends AbstractNegotiationParty {
 
         List<Value> bestValues = new ArrayList<>();
         double bestScore = 0;
+
         for(Value value : valueWeights.keySet()) {
             if(proposedValuesStack.contains(value))
                 continue;
-            double valueScore = valueWeights.get(value) * VALUE_PREFFERENCE_FACTOR;
-            valueScore += model.getWeight(findIssueByValue(value).issue,value) * VALUE_GLOBAL_COUNT_FACTOR;
 
-            if(valueScore> bestScore){
+            double valueScore = valueWeights.get(value) * VALUE_PREFFERENCE_FACTOR;
+
+            valueScore += model.getWeight(findIssueByValue(value).issue, value) * VALUE_GLOBAL_COUNT_FACTOR;
+
+            if(valueScore > bestScore){
                 bestValues.clear();
                 bestValues.add(value);
                 bestScore=valueScore;
-            }else if(valueScore == bestScore){
+            } else if(valueScore == bestScore){
                 bestValues.add(value);
             }
         }
 
         Value lastProposed;
+
         //makes sure that we only concede on one issue before 0.9 time has passed
         if(timeline.getTime()<0.9) {
             lastProposed = proposedValuesStack.pop();
@@ -228,15 +232,11 @@ public class Groupn extends AbstractNegotiationParty {
         if(action instanceof Offer){
             System.out.println("receiveMessage: Offer: " + action);
 
-            if(action != null)
-                currentOffer = (Offer) action;
-            else
-                System.out.println("ERROR: NEW OFFER EQUAL NULL");
-
+            currentOffer = (Offer) action;
 
             offerHistory.add(currentOffer);
-            updateOpponentModel(currentOffer.getAgent(), currentOffer.getBid());
 
+            updateOpponentModel(currentOffer.getAgent(), currentOffer.getBid());
             updateModel(currentOffer.getBid());
 
             System.out.println("receiveMessage: Bid utility: " + getUtility(currentOffer.getBid()));
@@ -249,14 +249,14 @@ public class Groupn extends AbstractNegotiationParty {
     }
 
     private void updateModel(Bid bid) {
-        if(bid!=null) {
+        if(bid != null) {
             for (Issue issue : bid.getIssues()) {
-            try {
-                model.updateIssueWeight(issue,bid.getValue(issue.getNumber()));
-            } catch (Exception e) {
-                e.printStackTrace();
+                try {
+                    model.updateIssueWeight(issue, bid.getValue(issue.getNumber()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }
         }else{
             System.out.println("ERROR: CURRENT BID IS NULL");
         }
@@ -267,9 +267,9 @@ public class Groupn extends AbstractNegotiationParty {
             opponentModels.put(agentID, new OpponentModel(agentID));
 
         OpponentModel opponent = opponentModels.get(agentID);
-        if(currentBid!=null) {
-            for (Issue issue : currentBid.getIssues()) {
 
+        if(currentBid != null) {
+            for (Issue issue : currentBid.getIssues()) {
                 try {
                     opponent.updateIssueWeight(issue, currentBid.getValue(issue.getNumber()));
                 } catch (Exception e) {
