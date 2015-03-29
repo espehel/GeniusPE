@@ -18,17 +18,17 @@ import negotiator.utility.UtilitySpace;
  * This is your negotiation party.
  */
 public class GroupHellerudKanestroem extends AbstractNegotiationParty {
+    private static final boolean DEBUG = false;
 
     public static double VALUE_PREFFERENCE_FACTOR = 10;
     public static double VALUE_GLOBAL_COUNT_FACTOR = 0.1;
 
-    private static final boolean DEBUG = false;
-
     private Offer currentOffer;
     private ArrayList<IssueWrapper> issues;
-
     private Map<Value,Double> valueWeights;
+
     private Random random;
+
     /**
      * a model for the preferences for all the parties
      */
@@ -44,7 +44,6 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
     private Set<Value> proposedValues;
 
     private Stack<Value> proposedValuesStack;
-
 
     /**
      * Please keep this constructor. This is called by genius.
@@ -63,8 +62,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
         if(DEBUG) System.out.println("==START CONSTRUCTOR===");
 
         random = new Random(randomSeed);
-        //history = new LinkedList<>();
-        //offerHistory = new ArrayList<>();
+
         issues = new ArrayList<>();
 
         //saves all the issues for this scenario with its id and weight
@@ -138,7 +136,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             if (!validActions.contains(Accept.class)) {
                 Offer n = new Offer(myBid);
                 currentOffer = n;
-                return n; //new Offer(myBid);
+                return n;
             }
             //if the current offer has a utility that is equal or better than our bid
             else if(utilitySpace.getUtility(currentOffer.getBid()) >= utilitySpace.getUtility(myBid)){
@@ -154,7 +152,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
 
         Offer n = new Offer(myBid);
         currentOffer = n;
-        return n;//new Offer(myBid);
+        return n;
     }
 
     /**
@@ -164,7 +162,6 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
      * @throws Exception
      */
     private Bid concedeBid() throws Exception{
-
         List<Value> bestValues = new ArrayList<>();
         double bestScore = Integer.MIN_VALUE;
 
@@ -177,6 +174,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
 
             valueScore += model.getWeight(findIssueByValue(value).issue, value) * VALUE_GLOBAL_COUNT_FACTOR;
 
+            // "Record" best Value
             if(valueScore > bestScore){
                 bestValues.clear();
                 bestValues.add(value);
@@ -186,11 +184,8 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             }
         }
 
-        //Value lastProposed;
-
         //makes sure that we only concede on one issue before 0.9 time has passed
         if(timeline.getTime() < 0.9) {
-            //lastProposed =
             // "Resets" the last proposed value to concede on
             proposedValuesStack.pop();
             myBid = utilitySpace.getMaxUtilityBid();
@@ -217,14 +212,11 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
         // numberOfParties is set in super
         super.receiveMessage(sender, action);
 
-        // Boring information
+        // information
         if(action instanceof Inform){
             if (DEBUG) System.out.println("receiveMessage: Informed: " + action);
             return;
         }
-
-        //Update the history
-        //history.add(new AgentOfferWrapper(sender, action));
 
         // Here you can listen to other parties' messagese
         if(action instanceof Offer){
@@ -233,8 +225,6 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             // Updates the currentOffer so it can be used when we
             // need to choose an action
             currentOffer = (Offer)action;
-
-            //offerHistory.add(currentOffer);
 
             updateModel(currentOffer.getBid());
 
@@ -264,6 +254,13 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
         }
     }
 
+    /**
+     * Given a specific Value this methods finds the correct Issue.
+     *
+     * @param value
+     *
+     * @return null if no Issue found.
+     */
     public IssueWrapper findIssueByValue(Value value){
         for (IssueWrapper issue : issues){
             for (Value iValue : issue.values){
