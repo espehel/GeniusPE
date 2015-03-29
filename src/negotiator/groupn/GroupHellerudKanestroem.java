@@ -22,7 +22,8 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
     public static double VALUE_PREFFERENCE_FACTOR = 10;
     public static double VALUE_GLOBAL_COUNT_FACTOR = 0.1;
 
-    //private List<Offer> offerHistory;
+    private static final boolean DEBUG = false;
+
     private Offer currentOffer;
     private ArrayList<IssueWrapper> issues;
 
@@ -44,11 +45,6 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
 
     private Stack<Value> proposedValuesStack;
 
-    /**
-     * History of all received Offers and Accepts in chronological order.
-     */
-    //private LinkedList<AgentOfferWrapper> history;
-
 
     /**
      * Please keep this constructor. This is called by genius.
@@ -64,7 +60,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
                                    long randomSeed) {
         // Make sure that this constructor calls it's parent.
         super(utilitySpace, deadlines, timeline, randomSeed);
-        System.out.println("==START CONSTRUCTOR===");
+        if(DEBUG) System.out.println("==START CONSTRUCTOR===");
 
         random = new Random(randomSeed);
         //history = new LinkedList<>();
@@ -115,10 +111,11 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             e.printStackTrace();
         }
 
-
-        System.out.println("----------UTILITYSPACE--------------");
-        System.out.println(utilitySpace);
-        System.out.println("==END CONSTRUCTOR===");
+        if(DEBUG) {
+            System.out.println("----------UTILITYSPACE--------------");
+            System.out.println(utilitySpace);
+            System.out.println("==END CONSTRUCTOR===");
+        }
     }
 
     /**
@@ -131,9 +128,11 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
     @Override
     public Action chooseAction(List<Class> validActions) {
         try {
-            System.out.println("==START===");
-            for (Class c : validActions) System.out.println("chooseAction: " + c.getSimpleName());
-            System.out.println("==END===");
+            if(DEBUG) {
+                System.out.println("==START===");
+                for (Class c : validActions) System.out.println("chooseAction: " + c.getSimpleName());
+                System.out.println("==END===");
+            }
 
             // if we are the first party, we make the optimal offer for us.
             if (!validActions.contains(Accept.class)) {
@@ -149,13 +148,10 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             else if(timeline.getTime() > 0.5){
                 myBid = concedeBid();
             }
-            // todo If time is ~1, should we Accept by default? Total rejection of negotiation is not good.
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // todo In the beginning we ALWAYS override the other bids. So we only
-        // learn from the overriding bids of the other agents.
         Offer n = new Offer(myBid);
         currentOffer = n;
         return n;//new Offer(myBid);
@@ -171,9 +167,9 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
 
         List<Value> bestValues = new ArrayList<>();
         double bestScore = Integer.MIN_VALUE;
-        System.out.println("LOROFL" + valueWeights.size());
 
         for(Value value : valueWeights.keySet()) {
+            // Do not propose values we have already proposed.
             if(proposedValuesStack.contains(value))
                 continue;
 
@@ -185,7 +181,6 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
                 bestValues.clear();
                 bestValues.add(value);
                 bestScore = valueScore;
-                // todo this double check must have bounds
             } else if(valueScore == bestScore){
                 bestValues.add(value);
             }
@@ -196,13 +191,11 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
         //makes sure that we only concede on one issue before 0.9 time has passed
         if(timeline.getTime() < 0.9) {
             //lastProposed =
+            // "Resets" the last proposed value to concede on
             proposedValuesStack.pop();
             myBid = utilitySpace.getMaxUtilityBid();
         }
 
-        // todo Her kommer mitt forslag inn
-        // Vi velger den verdien som påvirker oss minst.
-        System.out.println("LOL " + bestValues.size());
         Value valueToConcede = bestValues.get(random.nextInt(bestValues.size()));
         proposedValuesStack.push(valueToConcede);
 
@@ -226,7 +219,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
 
         // Boring information
         if(action instanceof Inform){
-            System.out.println("receiveMessage: Informed: " + action);
+            if (DEBUG) System.out.println("receiveMessage: Informed: " + action);
             return;
         }
 
@@ -235,7 +228,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
 
         // Here you can listen to other parties' messagese
         if(action instanceof Offer){
-            System.out.println("receiveMessage: Offer: " + action);
+            if (DEBUG) System.out.println("receiveMessage: Offer: " + action);
 
             // Updates the currentOffer so it can be used when we
             // need to choose an action
@@ -245,7 +238,7 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
 
             updateModel(currentOffer.getBid());
 
-            System.out.println("receiveMessage: Bid utility: " + getUtility(currentOffer.getBid()));
+            if (DEBUG) System.out.println("receiveMessage: Bid utility: " + getUtility(currentOffer.getBid()));
 
         } else if (action instanceof Accept) {
             updateModel(currentOffer.getBid());
