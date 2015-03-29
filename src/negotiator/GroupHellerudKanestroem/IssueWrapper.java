@@ -1,4 +1,4 @@
-package negotiator.groupn;
+package negotiator.GroupHellerudKanestroem;
 
 import negotiator.issue.Issue;
 import negotiator.issue.ValueDiscrete;
