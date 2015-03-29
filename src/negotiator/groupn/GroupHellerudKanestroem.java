@@ -184,13 +184,15 @@ public class GroupHellerudKanestroem extends AbstractNegotiationParty {
             }
         }
 
-        //makes sure that we only concede on one issue before 0.9 time has passed
+        // Makes sure that we only concede on one issue before 0.9 time has passed
+        // If times is less than 0.9 then we always reset to our best bid.
         if(timeline.getTime() < 0.9) {
             // "Resets" the last proposed value to concede on
             proposedValuesStack.pop();
             myBid = utilitySpace.getMaxUtilityBid();
         }
 
+        // Choose one of the best Values to concede on. and concede
         Value valueToConcede = bestValues.get(random.nextInt(bestValues.size()));
         proposedValuesStack.push(valueToConcede);
 
